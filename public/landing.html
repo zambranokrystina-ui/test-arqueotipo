@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Descubre tu Arquetipo — Mentes Abundantes</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Roboto Condensed', sans-serif; color: #1B2A4A; background: #fefcf8; -webkit-font-smoothing: antialiased; }
+    .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 20; background: rgba(27,42,74,0.97); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo img { height: 36px; }
+    .nav-link { color: #C9A84C; text-decoration: none; font-size: 13px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; transition: color 0.2s; }
+    .nav-link:hover { color: #CC5E22; }
+    .hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px 24px 60px; position: relative; overflow: hidden; background: radial-gradient(ellipse at 30% 20%, #F0E8D4 0%, #fefcf8 50%, #fff 100%); }
+    .hero::before { content: ''; position: absolute; top: -120px; right: -120px; width: 400px; height: 400px; border-radius: 50%; background: radial-gradient(circle, rgba(204,94,34,0.07) 0%, transparent 70%); }
+    .hero::after { content: ''; position: absolute; bottom: -80px; left: -80px; width: 300px; height: 300px; border-radius: 50%; background: radial-gradient(circle, rgba(122,148,85,0.07) 0%, transparent 70%); }
+    .hero-eyebrow { font-size: 13px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: #7A9455; margin-bottom: 20px; animation: fadeUp 0.6s ease 0.1s both; }
+    .hero h1 { font-size: clamp(38px, 7vw, 56px); font-weight: 700; color: #1B2A4A; line-height: 1.05; margin-bottom: 20px; max-width: 650px; letter-spacing: -0.5px; animation: fadeUp 0.6s ease 0.2s both; }
+    .hero h1 span { color: #CC5E22; }
+    .hero-sub { font-size: 18px; font-weight: 300; color: rgba(27,42,74,0.6); line-height: 1.7; max-width: 500px; margin-bottom: 40px; animation: fadeUp 0.6s ease 0.3s both; }
+    .hero-cta { display: inline-flex; align-items: center; gap: 10px; padding: 16px 44px; border-radius: 8px; border: none; background: #CC5E22; color: #fff; font-size: 16px; font-weight: 700; font-family: 'Roboto Condensed', sans-serif; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; text-decoration: none; box-shadow: 0 4px 20px rgba(204,94,34,0.3); transition: all 0.3s ease; animation: fadeUp 0.6s ease 0.4s both; }
+    .hero-cta:hover { transform: translateY(-2px); box-shadow: 0 6px 28px rgba(204,94,34,0.4); background: #b8531d; }
+    .hero-time { margin-top: 16px; font-size: 14px; font-weight: 400; color: rgba(27,42,74,0.4); animation: fadeUp 0.6s ease 0.5s both; }
+    .section-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: #C9A84C; margin-bottom: 10px; }
+    .section-title { font-size: clamp(28px, 4vw, 40px); font-weight: 700; color: #1B2A4A; margin-bottom: 12px; letter-spacing: -0.3px; }
+    .section-sub { font-size: 16px; font-weight: 300; color: rgba(27,42,74,0.55); line-height: 1.7; max-width: 520px; margin: 0 auto 48px; }
+    .archetypes-section { padding: 80px 24px; background: #fff; text-align: center; }
+    .archetypes-inner { max-width: 800px; margin: 0 auto; }
+    .archetype-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    @media (max-width: 640px) { .archetype-grid { grid-template-columns: repeat(2, 1fr); } }
+    .archetype-card { padding: 28px 16px; border-radius: 10px; border: 1.5px solid rgba(27,42,74,0.06); background: #fefcf8; text-align: center; transition: all 0.3s ease; }
+    .archetype-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(27,42,74,0.08); border-color: #C9A84C; }
+    .archetype-emoji { font-size: 34px; margin-bottom: 10px; }
+    .archetype-name { font-size: 20px; font-weight: 700; color: #1B2A4A; margin-bottom: 4px; }
+    .archetype-tag { font-size: 13px; font-weight: 300; color: rgba(27,42,74,0.5); line-height: 1.5; }
+    .discover-section { padding: 80px 24px; background: radial-gradient(ellipse at 70% 80%, rgba(240,232,212,0.4) 0%, #fefcf8 60%); text-align: center; }
+    .discover-inner { max-width: 700px; margin: 0 auto; }
+    .discover-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 48px; }
+    @media (max-width: 540px) { .discover-grid { grid-template-columns: 1fr; } }
+    .discover-card { padding: 28px 24px; border-radius: 10px; background: #fff; border: 1px solid rgba(27,42,74,0.06); text-align: left; }
+    .discover-icon { width: 48px; height: 48px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 14px; }
+    .discover-card h3 { font-size: 18px; font-weight: 700; color: #1B2A4A; margin-bottom: 6px; }
+    .discover-card p { font-size: 14px; font-weight: 300; color: rgba(27,42,74,0.6); line-height: 1.6; }
+    .how-section { padding: 80px 24px; background: #fff; text-align: center; }
+    .how-inner { max-width: 700px; margin: 0 auto; }
+    .how-steps { display: flex; gap: 24px; margin-top: 48px; justify-content: center; flex-wrap: wrap; }
+    .how-step { flex: 1; min-width: 180px; max-width: 200px; text-align: center; }
+    .how-number { width: 52px; height: 52px; border-radius: 50%; background: #1B2A4A; color: #C9A84C; font-size: 22px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+    .how-step h3 { font-size: 16px; font-weight: 700; color: #1B2A4A; margin-bottom: 6px; }
+    .how-step p { font-size: 14px; font-weight: 300; color: rgba(27,42,74,0.55); line-height: 1.5; }
+    .cta-section { padding: 80px 24px; text-align: center; background: #1B2A4A; color: #fff; position: relative; overflow: hidden; }
+    .cta-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #CC5E22, #C9A84C, #7A9455); }
+    .cta-section .section-eyebrow { color: #C9A84C; }
+    .cta-section .section-title { color: #fff; margin-bottom: 16px; }
+    .cta-section .section-sub { color: rgba(240,232,212,0.6); margin-bottom: 40px; }
+    .cta-btn { display: inline-flex; align-items: center; gap: 10px; padding: 18px 52px; border-radius: 8px; border: none; background: #CC5E22; color: #fff; font-size: 17px; font-weight: 700; font-family: 'Roboto Condensed', sans-serif; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; text-decoration: none; box-shadow: 0 4px 24px rgba(204,94,34,0.4); transition: all 0.3s ease; }
+    .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 32px rgba(204,94,34,0.5); background: #b8531d; }
+    .cta-footer { margin-top: 28px; font-size: 13px; font-weight: 300; color: rgba(240,232,212,0.3); }
+    .cta-footer a { color: rgba(240,232,212,0.45); text-decoration: none; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a href="https://www.mentes-abundantes.com" class="nav-logo">
+      <img src="https://d1yei2z3i6k35z.cloudfront.net/15276871/692ee54b2b459_AbstractWordmarkLogoforMentesAbundantes.png" alt="Mentes Abundantes" />
+    </a>
+    <a href="https://www.mentes-abundantes.com" class="nav-link">← Volver al programa</a>
+  </nav>
+  <section class="hero">
+    <div class="hero-eyebrow">Mentes Abundantes</div>
+    <h1>Descubre tu <span>Arquetipo</span> como Emprendedora</h1>
+    <p class="hero-sub">Un test diseñado para revelar cómo piensas, sientes y te comunicas — para que tu acompañamiento sea verdaderamente personalizado.</p>
+    <a href="https://test-arqueotipo.vercel.app/" class="hero-cta">Comenzar el test →</a>
+    <div class="hero-time">⏱ Solo toma 8-12 minutos</div>
+  </section>
+  <section class="archetypes-section">
+    <div class="archetypes-inner">
+      <div class="section-eyebrow">6 Arquetipos</div>
+      <h2 class="section-title">¿Cuál es el tuyo?</h2>
+      <p class="section-sub">Cada arquetipo tiene fortalezas únicas, patrones distintos y un camino diferente hacia la abundancia.</p>
+      <div class="archetype-grid">
+        <div class="archetype-card"><div class="archetype-emoji">🎨</div><div class="archetype-name">La Creadora</div><div class="archetype-tag">Transforma ideas en realidad</div></div>
+        <div class="archetype-card"><div class="archetype-emoji">🦉</div><div class="archetype-name">La Sabia</div><div class="archetype-tag">Claridad y estrategia</div></div>
+        <div class="archetype-card"><div class="archetype-emoji">⚔️</div><div class="archetype-name">La Guerrera</div><div class="archetype-tag">Acción y determinación</div></div>
+        <div class="archetype-card"><div class="archetype-emoji">🌿</div><div class="archetype-name">La Cuidadora</div><div class="archetype-tag">Conexión y servicio</div></div>
+        <div class="archetype-card"><div class="archetype-emoji">✨</div><div class="archetype-name">La Maga</div><div class="archetype-tag">Transformación y visión</div></div>
+        <div class="archetype-card"><div class="archetype-emoji">🧭</div><div class="archetype-name">La Exploradora</div><div class="archetype-tag">Adaptabilidad y curiosidad</div></div>
+      </div>
+    </div>
+  </section>
+  <section class="discover-section">
+    <div class="discover-inner">
+      <div class="section-eyebrow">Qué vas a descubrir</div>
+      <h2 class="section-title">Un perfil creado solo para ti</h2>
+      <p class="section-sub">Al completar el test, la IA analiza tus respuestas y genera un perfil único con:</p>
+      <div class="discover-grid">
+        <div class="discover-card"><div class="discover-icon" style="background: rgba(204,94,34,0.08);">🧠</div><h3>Tu mentalidad</h3><p>Cómo piensas sobre el dinero, el éxito y los obstáculos que se interponen.</p></div>
+        <div class="discover-card"><div class="discover-icon" style="background: rgba(122,148,85,0.08);">💪</div><h3>Tus fortalezas</h3><p>Las 3 fortalezas principales que te hacen única como emprendedora.</p></div>
+        <div class="discover-card"><div class="discover-icon" style="background: rgba(201,168,76,0.08);">🔑</div><h3>Áreas de trabajo</h3><p>Los puntos clave donde enfocarnos durante tu acompañamiento.</p></div>
+        <div class="discover-card"><div class="discover-icon" style="background: rgba(123,45,142,0.08);">💬</div><h3>Tu estilo</h3><p>Cómo aprendes, te comunicas y procesas — para adaptar las sesiones a ti.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="how-section">
+    <div class="how-inner">
+      <div class="section-eyebrow">Cómo funciona</div>
+      <h2 class="section-title">3 pasos simples</h2>
+      <div class="how-steps">
+        <div class="how-step"><div class="how-number">01</div><h3>Responde</h3><p>15 preguntas sobre tu visión, relación con el dinero y estilo de comunicación.</p></div>
+        <div class="how-step"><div class="how-number">02</div><h3>Descubre</h3><p>La IA analiza tus respuestas y genera tu perfil de arquetipo personalizado.</p></div>
+        <div class="how-step"><div class="how-number">03</div><h3>Conecta</h3><p>Usamos tu perfil para diseñar un acompañamiento que se adapte a ti.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="cta-section">
+    <div class="section-eyebrow">¿Lista?</div>
+    <h2 class="section-title">Tu transformación empieza<br>con conocerte.</h2>
+    <p class="section-sub">Este test es el primer paso de tu proceso con Mentes Abundantes. Tus respuestas son confidenciales y nos ayudan a diseñar un acompañamiento único para ti.</p>
+    <a href="https://test-arqueotipo.vercel.app/" class="cta-btn">Descubrir mi arquetipo →</a>
+    <div class="cta-footer">Mentes Abundantes — <a href="https://www.mentes-abundantes.com">www.mentes-abundantes.com</a></div>
+  </section>
+</body>
+</html>
