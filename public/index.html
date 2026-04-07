@@ -114,3 +114,328 @@
           ]},
           { id: "q9", text: "¿Qué patrón de tu infancia o pasado crees que todavía afecta cómo te muestras en tu emprendimiento?", type: "open", placeholder: "Puede ser algo que te dijeron, que observaste, o que viviste..." },
           { id: "q10", text: "Si pudieras soltar UNA creencia limitante hoy, ¿cuál sería?", type: "open", placeholder: "Escribe la primera que venga a tu mente..." },
+        ],
+      },
+      {
+        id: "comunicacion", title: "Estilo de Comunicación", subtitle: "Cómo aprendes, procesas y te expresas",
+        questions: [
+          { id: "q11", text: "¿Cómo prefieres aprender algo nuevo?", type: "choice", options: [
+            { text: "Viendo ejemplos visuales e inspiración", archetype: "creadora" },
+            { text: "Leyendo, investigando y tomando notas", archetype: "sabia" },
+            { text: "Haciendo — aprendo en la práctica", archetype: "guerrera" },
+            { text: "Conversando y escuchando experiencias de otros", archetype: "cuidadora" },
+            { text: "Experimentando por mi cuenta a mi ritmo", archetype: "exploradora" },
+            { text: "A través de reflexión profunda e intuición", archetype: "maga" },
+          ]},
+          { id: "q12", text: "En una sesión de coaching, ¿qué necesitas más?", type: "choice", options: [
+            { text: "Espacio para hacer lluvia de ideas y explorar opciones", archetype: "creadora" },
+            { text: "Datos, frameworks y un plan paso a paso", archetype: "sabia" },
+            { text: "Retos claros, accountability y plazos", archetype: "guerrera" },
+            { text: "Sentirme escuchada y comprendida primero", archetype: "cuidadora" },
+            { text: "Flexibilidad y que no se sienta rígido", archetype: "exploradora" },
+            { text: "Que me ayuden a ver lo que no puedo ver sola", archetype: "maga" },
+          ]},
+          { id: "q13", text: "Cuando te sientes abrumada, ¿qué haces?", type: "choice", options: [
+            { text: "Me desconecto y busco algo creativo para recargar", archetype: "creadora" },
+            { text: "Hago una lista y organizo mis pensamientos", archetype: "sabia" },
+            { text: "Me pongo en acción — hacer algo me calma", archetype: "guerrera" },
+            { text: "Hablo con alguien de confianza", archetype: "cuidadora" },
+            { text: "Salgo, camino, cambio de ambiente", archetype: "exploradora" },
+            { text: "Medito, escribo en mi diario o hago algo introspectivo", archetype: "maga" },
+          ]},
+        ],
+      },
+      {
+        id: "cierre", title: "Cierre", subtitle: "Últimas reflexiones",
+        questions: [
+          { id: "q14", text: "¿Qué es lo que MÁS te emociona de empezar este programa?", type: "open", placeholder: "Cuéntanos lo que te tiene emocionada..." },
+          { id: "q15", text: "¿Hay algo que te preocupe o que quieras que sepamos antes de comenzar?", type: "open", placeholder: "Cualquier cosa que nos ayude a acompañarte mejor..." },
+        ],
+      },
+      { id: "result", title: "Tu Perfil", subtitle: "", questions: [] },
+    ];
+
+    function calculateArchetype(answers) {
+      const scores = {};
+      Object.keys(ARCHETYPES).forEach(function(k) { scores[k] = 0; });
+      SECTIONS.forEach(function(sec) {
+        sec.questions.forEach(function(q) {
+          if (q.type === "choice" && answers[q.id]) {
+            const opt = q.options.find(function(o) { return o.text === answers[q.id]; });
+            if (opt) scores[opt.archetype] = (scores[opt.archetype] || 0) + 1;
+          }
+        });
+      });
+      const sorted = Object.entries(scores).sort(function(a, b) { return b[1] - a[1]; });
+      return { primary: sorted[0][0], secondary: sorted[1][0], scores: scores };
+    }
+
+    function getOpenAnswers(answers) {
+      const open = [];
+      SECTIONS.forEach(function(sec) {
+        sec.questions.forEach(function(q) {
+          if (q.type === "open" && answers[q.id]) open.push({ label: q.text, answer: answers[q.id] });
+        });
+      });
+      return open;
+    }
+
+    async function generateProfile(answers, archResult) {
+      const primary = ARCHETYPES[archResult.primary];
+      const secondary = ARCHETYPES[archResult.secondary];
+      const openAnswers = getOpenAnswers(answers);
+      const openText = openAnswers.map(function(o) { return o.label + "\n→ " + o.answer; }).join("\n\n");
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ primaryTitle: primary.title, primaryTagline: primary.tagline, secondaryTitle: secondary.title, secondaryTagline: secondary.tagline, openText: openText }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      return data.profile;
+    }
+
+    async function saveToNotion(answers, archResult, profile, participantName) {
+      const primary = ARCHETYPES[archResult.primary];
+      const secondary = ARCHETYPES[archResult.secondary];
+      const openAnswers = getOpenAnswers(answers);
+      const today = new Date().toISOString().split("T")[0];
+      const res = await fetch("/api/notion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ participantName: participantName, date: today, primaryEmoji: primary.emoji, primaryTitle: primary.title, primaryTagline: primary.tagline, secondaryEmoji: secondary.emoji, secondaryTitle: secondary.title, secondaryTagline: secondary.tagline, profile: profile, openAnswers: openAnswers }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      return data;
+    }
+
+    function ChoiceOption({ text, selected, onClick }) {
+      return (
+        <button onClick={onClick} style={{
+          display: "block", width: "100%", textAlign: "left", padding: "14px 18px",
+          borderRadius: 14, cursor: "pointer", transition: "all 0.25s ease",
+          border: selected ? "2px solid " + C.orange : "2px solid rgba(27,42,74,0.08)",
+          background: selected ? "rgba(204,94,34,0.05)" : "rgba(255,255,255,0.7)",
+          color: C.navy, fontSize: 15, lineHeight: 1.5, fontWeight: selected ? 600 : 400,
+          transform: selected ? "scale(1.01)" : "scale(1)",
+          boxShadow: selected ? "0 2px 12px rgba(204,94,34,0.12)" : "none",
+        }}>
+          <span style={{ display: "inline-block", width: 22, height: 22, borderRadius: "50%", border: "2px solid " + (selected ? C.orange : "rgba(27,42,74,0.2)"), verticalAlign: "middle", marginRight: 12, position: "relative", top: -1, background: selected ? C.orange : "transparent", textAlign: "center", lineHeight: "18px", fontSize: 13, color: "#fff" }}>
+            {selected ? "✓" : ""}
+          </span>
+          {text}
+        </button>
+      );
+    }
+
+    function ArchetypeCard({ archKey, label, isMain }) {
+      const a = ARCHETYPES[archKey];
+      if (!a) return null;
+      return (
+        <div style={{ padding: isMain ? "28px 24px" : "20px 24px", borderRadius: 20, background: isMain ? "linear-gradient(135deg, " + a.color + "11, " + a.color + "08)" : "rgba(27,42,74,0.03)", border: "1.5px solid " + a.color + (isMain ? "33" : "18"), marginBottom: 16, animation: "cardIn 0.6s ease both" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: 2, color: a.color, marginBottom: 8 }}>{label}</div>
+          <div style={{ fontSize: isMain ? 36 : 28, marginBottom: 4 }}>{a.emoji}</div>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: isMain ? 28 : 22, fontWeight: 700, color: C.navy, marginBottom: 4 }}>{a.title}</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: a.color, marginBottom: 10 }}>{a.tagline}</div>
+          <div style={{ fontSize: 14, lineHeight: 1.7, color: "rgba(27,42,74,0.7)" }}>{a.desc}</div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [step, setStep] = useState(0);
+      const [answers, setAnswers] = useState({});
+      const [anim, setAnim] = useState(false);
+      const [archResult, setArchResult] = useState(null);
+      const [profile, setProfile] = useState(null);
+      const [phase, setPhase] = useState("quiz");
+      const [statusMsgs, setStatusMsgs] = useState([]);
+
+      const sec = SECTIONS[step];
+      const isIntro = step === 0;
+      const isResult = step === SECTIONS.length - 1;
+      const total = SECTIONS.length;
+
+      const go = function(t) {
+        if (anim) return;
+        setAnim(true);
+        setTimeout(function() { setStep(t); setAnim(false); window.scrollTo({ top: 0, behavior: "smooth" }); }, 280);
+      };
+
+      const canProceed = function() {
+        if (isIntro || isResult) return true;
+        return sec.questions.every(function(q) { return q.type === "open" || !!answers[q.id]; });
+      };
+
+      const handleNext = async function() {
+        if (step === SECTIONS.length - 2) {
+          go(step + 1);
+          setPhase("analyzing");
+          const result = calculateArchetype(answers);
+          setArchResult(result);
+          const name = answers.nombre || "Participante";
+
+          setStatusMsgs(["Analizando tu perfil con IA..."]);
+          var generatedProfile = null;
+          try {
+            generatedProfile = await generateProfile(answers, result);
+            setProfile(generatedProfile);
+            setStatusMsgs(function(s) { return s.concat(["✓ Perfil generado"]); });
+          } catch(e) {
+            setStatusMsgs(function(s) { return s.concat(["⚠ Perfil generado sin IA"]); });
+          }
+
+          setStatusMsgs(function(s) { return s.concat(["Guardando en Notion..."]); });
+          try {
+            await saveToNotion(answers, result, generatedProfile, name);
+            setStatusMsgs(function(s) { return s.concat(["✓ Guardado en Notion"]); });
+          } catch(e) {
+            setStatusMsgs(function(s) { return s.concat(["⚠ Error guardando en Notion"]); });
+          }
+
+          setPhase("result");
+        } else {
+          go(step + 1);
+        }
+      };
+
+      const pct = (step / (total - 1)) * 100;
+      const canGo = canProceed() && (!isIntro || answers.nombre);
+
+      return (
+        <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse at 20% 0%, " + C.cream + " 0%, #fefcf8 50%, #fff 100%)" }}>
+          <div style={{ position: "sticky", top: 0, zIndex: 10, backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", background: "rgba(254,252,248,0.88)", borderBottom: "1px solid rgba(27,42,74,0.05)" }}>
+            <div style={{ maxWidth: 600, margin: "0 auto", padding: "18px 24px 14px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 14 }}>
+                <div>
+                  <div style={{ fontFamily: "'Cormorant Garamond', serif", fontWeight: 700, fontSize: 20, color: C.navy }}>Mentes Abundantes</div>
+                  <div style={{ fontSize: 11, color: C.olive, fontWeight: 600, letterSpacing: 2.5, textTransform: "uppercase", marginTop: 1 }}>Test de Arquetipo</div>
+                </div>
+                {!isIntro && !isResult && <div style={{ fontSize: 12, fontWeight: 700, color: C.orange }}>{step} / {total - 2}</div>}
+              </div>
+              <div style={{ height: 3, background: "rgba(27,42,74,0.06)", borderRadius: 2, overflow: "hidden" }}>
+                <div style={{ width: pct + "%", height: "100%", background: "linear-gradient(90deg, " + C.orange + ", " + C.gold + ")", borderRadius: 2, transition: "width 0.7s cubic-bezier(0.4,0,0.2,1)" }} />
+              </div>
+            </div>
+          </div>
+
+          <div style={{ maxWidth: 600, margin: "0 auto", padding: "36px 24px 140px", opacity: anim ? 0 : 1, transform: anim ? "translateY(16px)" : "translateY(0)", transition: "all 0.28s ease" }}>
+
+            {isIntro && (
+              <div style={{ textAlign: "center", paddingTop: 32 }}>
+                <div style={{ width: 90, height: 90, borderRadius: "50%", margin: "0 auto 28px", background: "conic-gradient(from 45deg, " + C.orange + ", " + C.gold + ", " + C.olive + ", " + C.navy + ", " + C.orange + ")", display: "flex", alignItems: "center", justifyContent: "center", padding: 3 }}>
+                  <div style={{ width: "100%", height: "100%", borderRadius: "50%", background: C.cream, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36 }}>✦</div>
+                </div>
+                <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 34, fontWeight: 700, color: C.navy, margin: "0 0 8px", lineHeight: 1.15 }}>Descubre tu Arquetipo</h1>
+                <p style={{ fontSize: 16, color: "rgba(27,42,74,0.55)", lineHeight: 1.75, maxWidth: 440, margin: "0 auto 20px" }}>Este test nos ayudará a entender cómo piensas, sientes y te comunicas — para que tu acompañamiento sea verdaderamente personalizado.</p>
+                <div style={{ display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap", marginBottom: 28 }}>
+                  {[["🧠","Mentalidad"],["💰","Dinero"],["💬","Comunicación"],["🔮","Arquetipo"]].map(function(item) {
+                    return <div key={item[1]} style={{ textAlign: "center" }}><div style={{ fontSize: 24, marginBottom: 4 }}>{item[0]}</div><div style={{ fontSize: 12, fontWeight: 600, color: "rgba(27,42,74,0.4)", letterSpacing: 0.5 }}>{item[1]}</div></div>;
+                  })}
+                </div>
+                <div style={{ background: "rgba(122,148,85,0.08)", padding: "10px 20px", borderRadius: 12, display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, color: C.olive, fontWeight: 500 }}>⏱ 8-12 minutos</div>
+                <div style={{ marginTop: 36, textAlign: "left", maxWidth: 380, marginLeft: "auto", marginRight: "auto" }}>
+                  <label style={{ fontSize: 14, fontWeight: 600, color: C.navy, marginBottom: 8, display: "block" }}>Tu nombre completo</label>
+                  <input type="text" value={answers.nombre || ""} onChange={function(e) { setAnswers(function(a) { return Object.assign({}, a, { nombre: e.target.value }); }); }} placeholder="Para personalizar tu resultado" style={{ width: "100%", padding: "13px 18px", borderRadius: 12, border: "1.5px solid rgba(27,42,74,0.1)", fontSize: 16, color: C.navy, outline: "none", background: "#fff", boxSizing: "border-box" }} />
+                </div>
+              </div>
+            )}
+
+            {!isIntro && !isResult && (
+              <div>
+                <div style={{ marginBottom: 32 }}>
+                  <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 30, fontWeight: 700, color: C.navy, margin: "0 0 6px" }}>{sec.title}</h2>
+                  <p style={{ fontSize: 14, color: "rgba(27,42,74,0.45)", margin: 0 }}>{sec.subtitle}</p>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 36 }}>
+                  {sec.questions.map(function(q, qi) {
+                    return (
+                      <div key={q.id} style={{ animation: "fadeUp 0.5s ease " + (qi * 0.08) + "s both" }}>
+                        <label style={{ display: "block", fontSize: 16, fontWeight: 600, color: C.navy, marginBottom: 12, lineHeight: 1.5 }}>{q.text}</label>
+                        {q.type === "choice" && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            {q.options.map(function(opt) { return <ChoiceOption key={opt.text} text={opt.text} selected={answers[q.id] === opt.text} onClick={function() { var n = {}; n[q.id] = opt.text; setAnswers(function(a) { return Object.assign({}, a, n); }); }} />; })}
+                          </div>
+                        )}
+                        {q.type === "open" && (
+                          <textarea value={answers[q.id] || ""} onChange={function(e) { var v = e.target.value; var n = {}; n[q.id] = v; setAnswers(function(a) { return Object.assign({}, a, n); }); }} placeholder={q.placeholder} rows={3} style={{ width: "100%", padding: "14px 18px", borderRadius: 14, border: "1.5px solid rgba(27,42,74,0.1)", fontSize: 15, color: C.navy, outline: "none", background: "rgba(255,255,255,0.7)", resize: "vertical", minHeight: 80, boxSizing: "border-box" }} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {isResult && (
+              <div>
+                {phase === "analyzing" && (
+                  <div style={{ textAlign: "center", paddingTop: 60 }}>
+                    <div style={{ width: 64, height: 64, margin: "0 auto 24px", border: "3px solid " + C.cream, borderTopColor: C.orange, borderRadius: "50%", animation: "spin2 0.8s linear infinite" }} />
+                    <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 26, fontWeight: 700, color: C.navy, marginBottom: 20 }}>Analizando tu perfil...</h2>
+                    <div style={{ maxWidth: 340, margin: "0 auto", textAlign: "left" }}>
+                      {statusMsgs.map(function(m, i) { return <div key={i} style={{ padding: "8px 14px", marginBottom: 6, borderRadius: 10, fontSize: 14, fontWeight: 500, background: m.startsWith("✓") ? "rgba(122,148,85,0.08)" : m.startsWith("⚠") ? "rgba(204,94,34,0.08)" : "rgba(27,42,74,0.04)", color: m.startsWith("✓") ? C.olive : m.startsWith("⚠") ? C.orange : C.navy, animation: "fadeUp 0.3s ease" }}>{m}</div>; })}
+                    </div>
+                  </div>
+                )}
+
+                {phase === "result" && archResult && (
+                  <div style={{ animation: "fadeUp 0.6s ease" }}>
+                    <div style={{ textAlign: "center", marginBottom: 36 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: C.gold, marginBottom: 8 }}>Tu Resultado</div>
+                      <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 34, fontWeight: 700, color: C.navy, margin: "0 0 4px" }}>{answers.nombre ? answers.nombre + ", eres..." : "Tu arquetipo es..."}</h1>
+                    </div>
+                    <ArchetypeCard archKey={archResult.primary} label="Arquetipo Primario" isMain={true} />
+                    <ArchetypeCard archKey={archResult.secondary} label="Arquetipo Secundario" isMain={false} />
+                    {profile && (
+                      <div>
+                        <div style={{ padding: 24, borderRadius: 20, background: "rgba(27,42,74,0.03)", border: "1px solid rgba(27,42,74,0.06)", marginBottom: 16, animation: "cardIn 0.6s ease 0.2s both" }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: C.olive, marginBottom: 10 }}>Análisis Personalizado</div>
+                          <p style={{ fontSize: 15, lineHeight: 1.75, color: "rgba(27,42,74,0.75)", margin: 0 }}>{profile.resumen}</p>
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+                          <div style={{ padding: 20, borderRadius: 16, background: "rgba(122,148,85,0.06)", border: "1px solid rgba(122,148,85,0.12)", animation: "cardIn 0.6s ease 0.3s both" }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: C.olive, marginBottom: 10 }}>Fortalezas</div>
+                            {(profile.fortalezas || []).map(function(f, i) { return <div key={i} style={{ fontSize: 14, lineHeight: 1.6, color: C.navy, marginBottom: 4 }}>✦ {f}</div>; })}
+                          </div>
+                          <div style={{ padding: 20, borderRadius: 16, background: "rgba(204,94,34,0.04)", border: "1px solid rgba(204,94,34,0.1)", animation: "cardIn 0.6s ease 0.4s both" }}>
+                            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: C.orange, marginBottom: 10 }}>Áreas de Trabajo</div>
+                            {(profile.areas_trabajo || []).map(function(a, i) { return <div key={i} style={{ fontSize: 14, lineHeight: 1.6, color: C.navy, marginBottom: 4 }}>→ {a}</div>; })}
+                          </div>
+                        </div>
+                        <div style={{ padding: 24, borderRadius: 20, background: "linear-gradient(135deg, " + C.navy + "08, " + C.gold + "10)", border: "1px solid " + C.gold + "22", marginBottom: 16, animation: "cardIn 0.6s ease 0.5s both" }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", color: C.gold, marginBottom: 10 }}>Mensaje para Ti</div>
+                          <p style={{ fontSize: 16, lineHeight: 1.75, color: C.navy, margin: 0, fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic", fontWeight: 600 }}>"{profile.mensaje_personal}"</p>
+                        </div>
+                      </div>
+                    )}
+                    <div style={{ marginTop: 24, padding: "16px 20px", borderRadius: 14, background: "rgba(122,148,85,0.06)" }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: C.olive, marginBottom: 8 }}>Estado del envío</div>
+                      {statusMsgs.map(function(m, i) { return <div key={i} style={{ fontSize: 13, color: m.startsWith("✓") ? C.olive : m.startsWith("⚠") ? C.orange : C.navy, marginBottom: 3, fontWeight: 500 }}>{m}</div>; })}
+                    </div>
+                    <p style={{ textAlign: "center", fontSize: 13, color: "rgba(27,42,74,0.35)", marginTop: 28 }}>Mentes Abundantes — www.mentes-abundantes.com</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {phase !== "analyzing" && !isResult && (
+            <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 10, background: "rgba(254,252,248,0.92)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderTop: "1px solid rgba(27,42,74,0.05)" }}>
+              <div style={{ maxWidth: 600, margin: "0 auto", padding: "16px 24px", display: "flex", justifyContent: "space-between" }}>
+                {step > 0 ? <button onClick={function() { go(step - 1); }} style={{ padding: "12px 24px", borderRadius: 12, border: "1.5px solid rgba(27,42,74,0.1)", background: "#fff", color: C.navy, fontSize: 15, fontWeight: 600, cursor: "pointer" }}>← Anterior</button> : <div />}
+                <button onClick={handleNext} disabled={!canGo} style={{ padding: "12px 32px", borderRadius: 12, border: "none", background: canGo ? "linear-gradient(135deg, " + C.orange + ", #d97033)" : "rgba(27,42,74,0.1)", color: canGo ? "#fff" : "rgba(27,42,74,0.3)", fontSize: 15, fontWeight: 600, cursor: canGo ? "pointer" : "not-allowed", boxShadow: canGo ? "0 4px 16px rgba(204,94,34,0.25)" : "none" }}>
+                  {isIntro ? "Comenzar →" : step === SECTIONS.length - 2 ? "Ver mi resultado ✨" : "Siguiente →"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+  </script>
+</body>
+</html>
