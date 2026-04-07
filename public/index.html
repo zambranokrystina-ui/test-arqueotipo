@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test de Arquetipo — Mentes Abundantes</title>
+  <meta name="description" content="Descubre tu arquetipo emprendedor con Mentes Abundantes." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✦</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Source Sans 3', sans-serif; color: #1B2A4A; -webkit-font-smoothing: antialiased; }
+    #root { min-height: 100vh; }
+    @keyframes cardIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes spin2 { to { transform:rotate(360deg); } }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    button { font-family: 'Source Sans 3', sans-serif; }
+    textarea, input { font-family: 'Source Sans 3', sans-serif; }
+    textarea:focus, input:focus { border-color: #CC5E22 !important; outline: none; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const C = {
+      navy: "#1B2A4A", orange: "#CC5E22", olive: "#7A9455",
+      gold: "#C9A84C", cream: "#F0E8D4", white: "#FFFFFF",
+    };
+
+    const ARCHETYPES = {
+      creadora: { emoji: "🎨", color: "#CC5E22", title: "La Creadora", tagline: "Tu superpoder es transformar ideas en realidad", desc: "Ves el mundo como un lienzo de posibilidades. Tu mente está constantemente generando ideas, conceptos y visiones. Necesitas libertad creativa y te frustras con la rigidez." },
+      sabia: { emoji: "🦉", color: "#1B2A4A", title: "La Sabia", tagline: "Tu superpoder es la claridad y la estrategia", desc: "Analizas, investigas y planificas antes de actuar. Tu fortaleza está en la profundidad de tu conocimiento. Necesitas entender el 'por qué' antes del 'cómo'." },
+      guerrera: { emoji: "⚔️", color: "#8B4513", title: "La Guerrera", tagline: "Tu superpoder es la acción y la determinación", desc: "Cuando decides algo, vas con todo. No le temes a los retos y te motiva la competencia sana. Tu energía es contagiosa y tu resiliencia admirable." },
+      cuidadora: { emoji: "🌿", color: "#7A9455", title: "La Cuidadora", tagline: "Tu superpoder es conectar y servir desde el corazón", desc: "Tu motivación más profunda es ayudar a otros. Construyes comunidad de forma natural y la gente confía en ti. Tu reto es poner tus propias necesidades primero." },
+      maga: { emoji: "✨", color: "#7B2D8E", title: "La Maga", tagline: "Tu superpoder es la transformación y la visión", desc: "Ves posibilidades donde otros ven obstáculos. Tienes una capacidad innata para reinventarte y ayudar a otros a hacer lo mismo. Tu intuición es tu brújula." },
+      exploradora: { emoji: "🧭", color: "#C9A84C", title: "La Exploradora", tagline: "Tu superpoder es la adaptabilidad y la curiosidad", desc: "Te aburres con la rutina y buscas constantemente nuevas experiencias. Tu versatilidad es tu mayor activo, pero necesitas anclar tu energía en un propósito claro." },
+    };
+
+    const SECTIONS = [
+      { id: "intro", title: "Bienvenida", subtitle: "", questions: [] },
+      {
+        id: "identidad", title: "Identidad y Visión", subtitle: "Cómo te ves y cómo quieres ser vista",
+        questions: [
+          { id: "q1", text: "Cuando piensas en tu versión más exitosa dentro de 3 años, ¿qué ves?", type: "choice", options: [
+            { text: "Un negocio creativo que refleja mi esencia", archetype: "creadora" },
+            { text: "Una marca reconocida por su conocimiento y autoridad", archetype: "sabia" },
+            { text: "Un imperio que construí desde cero con disciplina", archetype: "guerrera" },
+            { text: "Una comunidad de personas a las que he transformado", archetype: "cuidadora" },
+            { text: "Libertad total para vivir y trabajar en mis términos", archetype: "exploradora" },
+            { text: "Ser la persona que otros buscan cuando necesitan un cambio profundo", archetype: "maga" },
+          ]},
+          { id: "q2", text: "¿Qué palabra te define mejor cuando estás en tu mejor momento?", type: "choice", options: [
+            { text: "Inspirada", archetype: "creadora" }, { text: "Enfocada", archetype: "sabia" },
+            { text: "Imparable", archetype: "guerrera" }, { text: "Conectada", archetype: "cuidadora" },
+            { text: "Libre", archetype: "exploradora" }, { text: "Poderosa", archetype: "maga" },
+          ]},
+          { id: "q3", text: "Si tuvieras que elegir una frase para tu marca, ¿cuál sería?", type: "choice", options: [
+            { text: "\"Diseño experiencias que transforman\"", archetype: "creadora" },
+            { text: "\"Te enseño el camino con claridad\"", archetype: "sabia" },
+            { text: "\"Los resultados hablan por sí solos\"", archetype: "guerrera" },
+            { text: "\"Crecemos juntas\"", archetype: "cuidadora" },
+            { text: "\"Atrévete a romper los moldes\"", archetype: "exploradora" },
+            { text: "\"Tu transformación empieza aquí\"", archetype: "maga" },
+          ]},
+        ],
+      },
+      {
+        id: "dinero", title: "Tu Relación con el Dinero", subtitle: "Cómo piensas, sientes y actúas con la abundancia",
+        questions: [
+          { id: "q4", text: "¿Cuál de estas frases resuena más contigo sobre el dinero?", type: "choice", options: [
+            { text: "El dinero es energía creativa — fluye cuando hago lo que amo", archetype: "creadora" },
+            { text: "El dinero es el resultado de decisiones inteligentes", archetype: "sabia" },
+            { text: "El dinero se gana con trabajo duro y constancia", archetype: "guerrera" },
+            { text: "Ganar dinero está bien, siempre que ayude a otros también", archetype: "cuidadora" },
+            { text: "El dinero me da libertad para vivir como quiero", archetype: "exploradora" },
+            { text: "Merezco abundancia y estoy lista para recibirla", archetype: "maga" },
+          ]},
+          { id: "q5", text: "Cuando recibes un ingreso inesperado, ¿cuál es tu primer instinto?", type: "choice", options: [
+            { text: "Invertir en algo que me inspire (curso, herramienta, experiencia)", archetype: "creadora" },
+            { text: "Ahorrarlo y planificar cómo usarlo estratégicamente", archetype: "sabia" },
+            { text: "Reinvertirlo en mi negocio para crecer más rápido", archetype: "guerrera" },
+            { text: "Compartirlo o usarlo para algo que beneficie a mi familia", archetype: "cuidadora" },
+            { text: "Darme un gusto o una aventura que tenía pendiente", archetype: "exploradora" },
+            { text: "Sentir gratitud y confiar en que viene más", archetype: "maga" },
+          ]},
+          { id: "q6", text: "¿Cuál es tu mayor bloqueo con el dinero?", type: "open", placeholder: "Sé honesta — esto es confidencial y nos ayuda muchísimo a personalizar tu proceso." },
+        ],
+      },
+      {
+        id: "bloqueos", title: "Miedos y Patrones", subtitle: "Lo que te frena y lo que te impulsa",
+        questions: [
+          { id: "q7", text: "¿Cuál de estos miedos te visita con más frecuencia?", type: "choice", options: [
+            { text: "Que mi trabajo no sea lo suficientemente bueno o único", archetype: "creadora" },
+            { text: "Tomar una decisión equivocada por falta de información", archetype: "sabia" },
+            { text: "Fracasar después de haberlo dado todo", archetype: "guerrera" },
+            { text: "Que me vean como egoísta por priorizar mi negocio", archetype: "cuidadora" },
+            { text: "Quedarme atrapada en algo que no me hace feliz", archetype: "exploradora" },
+            { text: "No ser capaz de lograr la transformación que deseo", archetype: "maga" },
+          ]},
+          { id: "q8", text: "Cuando algo no sale como esperabas, ¿cuál es tu patrón?", type: "choice", options: [
+            { text: "Me desmotivo y abandono el proyecto por uno nuevo", archetype: "creadora" },
+            { text: "Analizo qué salió mal hasta encontrar la causa", archetype: "sabia" },
+            { text: "Me frustro pero vuelvo a intentar con más fuerza", archetype: "guerrera" },
+            { text: "Me culpo y pienso que debí haber hecho más por otros", archetype: "cuidadora" },
+            { text: "Lo dejo ir rápido y busco otra oportunidad", archetype: "exploradora" },
+            { text: "Me detengo a reflexionar y busco el aprendizaje profundo", archetype: "maga" },
+          ]},
+          { id: "q9", text: "¿Qué patrón de tu infancia o pasado crees que todavía afecta cómo te muestras en tu emprendimiento?", type: "open", placeholder: "Puede ser algo que te dijeron, que observaste, o que viviste..." },
+          { id: "q10", text: "Si pudieras soltar UNA creencia limitante hoy, ¿cuál sería?", type: "open", placeholder: "Escribe la primera que venga a tu mente..." },
