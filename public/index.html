@@ -11,6 +11,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -22,6 +23,7 @@
     button { font-family: 'Source Sans 3', sans-serif; }
     textarea, input { font-family: 'Source Sans 3', sans-serif; }
     textarea:focus, input:focus { border-color: #CC5E22 !important; outline: none; }
+    .calendly-inline-widget { min-width: 280px; height: 700px; border-radius: 16px; overflow: hidden; }
   </style>
 </head>
 <body>
@@ -203,7 +205,26 @@
       const res = await fetch("/api/notion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ participantName: participantName, date: today, primaryEmoji: primary.emoji, primaryTitle: primary.title, primaryTagline: primary.tagline, secondaryEmoji: secondary.emoji, secondaryTitle: secondary.title, secondaryTagline: secondary.tagline, profile: profile, openAnswers: openAnswers }),
+        body: JSON.stringify({ participantName: participantName, email: answers.email || "", date: today, primaryEmoji: primary.emoji, primaryTitle: primary.title, primaryTagline: primary.tagline, secondaryEmoji: secondary.emoji, secondaryTitle: secondary.title, secondaryTagline: secondary.tagline, profile: profile, openAnswers: openAnswers }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      return data;
+    }
+
+    function notionUrlFromId(pageId) {
+      if (!pageId) return "";
+      return "https://www.notion.so/" + String(pageId).replace(/-/g, "");
+    }
+
+    async function saveToSheets(answers, archResult, participantName, notionUrl) {
+      const primary = ARCHETYPES[archResult.primary];
+      const secondary = ARCHETYPES[archResult.secondary];
+      const today = new Date().toISOString().split("T")[0];
+      const res = await fetch("/api/sheets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ participantName: participantName, email: answers.email || "", date: today, primaryTitle: primary.title, secondaryTitle: secondary.title, notionUrl: notionUrl || "" }),
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
@@ -239,6 +260,82 @@
           <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: isMain ? 28 : 22, fontWeight: 700, color: C.navy, marginBottom: 4 }}>{a.title}</div>
           <div style={{ fontSize: 15, fontWeight: 600, color: a.color, marginBottom: 10 }}>{a.tagline}</div>
           <div style={{ fontSize: 14, lineHeight: 1.7, color: "rgba(27,42,74,0.7)" }}>{a.desc}</div>
+        </div>
+      );
+    }
+
+    const CALENDLY_URL = "https://calendly.com/manifiestoabundancia/coaching-sesion-1";
+
+    function AgendaCTA({ nombre, email, arquetipo }) {
+      const [abierto, setAbierto] = useState(false);
+      const calRef = useRef(null);
+
+      const buildUrl = function() {
+        return CALENDLY_URL
+          + "?hide_gdpr_banner=1&background_color=fefcf8&text_color=1B2A4A&primary_color=CC5E22"
+          + "&name=" + encodeURIComponent(nombre || "")
+          + "&email=" + encodeURIComponent(email || "")
+          + "&a1=" + encodeURIComponent(arquetipo || "")
+          + "&utm_content=" + encodeURIComponent(arquetipo || "");
+      };
+
+      useEffect(function() {
+        if (!abierto || !calRef.current) return;
+        if (calRef.current.hasChildNodes()) return;
+        if (window.Calendly) {
+          window.Calendly.initInlineWidget({ url: buildUrl(), parentElement: calRef.current });
+          setTimeout(function() { calRef.current && calRef.current.scrollIntoView({ behavior: "smooth", block: "start" }); }, 250);
+        } else {
+          window.open(buildUrl(), "_blank");
+        }
+      }, [abierto]);
+
+      return (
+        <div style={{ marginTop: 32, padding: "32px 26px", borderRadius: 22, background: "linear-gradient(150deg, " + C.navy + " 0%, #24395F 100%)", color: "#fff", animation: "cardIn 0.6s ease 0.6s both", position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg, " + C.orange + ", " + C.gold + ", " + C.olive + ")" }} />
+
+          <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 2.5, textTransform: "uppercase", color: C.gold, marginBottom: 12 }}>Tu siguiente paso</div>
+
+          <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 700, lineHeight: 1.2, marginBottom: 12 }}>
+            Revisemos tu perfil juntas, en vivo
+          </h3>
+
+          <p style={{ fontSize: 15, lineHeight: 1.75, color: "rgba(240,232,212,0.75)", marginBottom: 22 }}>
+            Tu arquetipo te dice cómo piensas y desde dónde creas. Lo que sigue es qué hacer con eso.
+            Agenda una sesión de coaching 1:1 donde leemos tu resultado contigo y vemos si el programa
+            de Mentes Abundantes es tu paso correcto ahora mismo.
+          </p>
+
+          <div style={{ marginBottom: 26 }}>
+            {["Qué está frenando específicamente a tu arquetipo",
+              "El primer movimiento concreto para los próximos 30 días",
+              "Cómo sería tu acompañamiento dentro del programa"].map(function(t, i) {
+              return (
+                <div key={i} style={{ display: "flex", gap: 12, alignItems: "flex-start", padding: "10px 0", borderBottom: i < 2 ? "1px solid rgba(240,232,212,0.12)" : "none" }}>
+                  <span style={{ color: C.gold, fontSize: 14, lineHeight: "22px" }}>✦</span>
+                  <span style={{ fontSize: 14.5, lineHeight: 1.55, color: "rgba(240,232,212,0.9)" }}>{t}</span>
+                </div>
+              );
+            })}
+          </div>
+
+          {!abierto && (
+            <div>
+              <button onClick={function() { setAbierto(true); }} style={{ width: "100%", padding: "17px 32px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, " + C.orange + ", #d97033)", color: "#fff", fontSize: 16, fontWeight: 700, letterSpacing: 0.5, cursor: "pointer", boxShadow: "0 6px 24px rgba(204,94,34,0.35)" }}>
+                Agendar mi sesión 1:1 →
+              </button>
+              <p style={{ textAlign: "center", fontSize: 13, color: "rgba(240,232,212,0.45)", marginTop: 14 }}>
+                Con Krystina y Franklin — Mentes Abundantes
+              </p>
+            </div>
+          )}
+
+          {abierto && (
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", color: C.gold, marginBottom: 12 }}>Elige tu horario ↓</p>
+              <div ref={calRef} />
+            </div>
+          )}
         </div>
       );
     }
@@ -287,11 +384,21 @@
           }
 
           setStatusMsgs(function(s) { return s.concat(["Guardando en Notion..."]); });
+          var notionUrl = "";
           try {
-            await saveToNotion(answers, result, generatedProfile, name);
+            var notionRes = await saveToNotion(answers, result, generatedProfile, name);
+            notionUrl = notionUrlFromId(notionRes && notionRes.pageId);
             setStatusMsgs(function(s) { return s.concat(["✓ Guardado en Notion"]); });
           } catch(e) {
             setStatusMsgs(function(s) { return s.concat(["⚠ Error guardando en Notion"]); });
+          }
+
+          setStatusMsgs(function(s) { return s.concat(["Registrando en la hoja..."]); });
+          try {
+            await saveToSheets(answers, result, name, notionUrl);
+            setStatusMsgs(function(s) { return s.concat(["✓ Registrado en la hoja"]); });
+          } catch(e) {
+            setStatusMsgs(function(s) { return s.concat(["⚠ Error registrando en la hoja"]); });
           }
 
           setPhase("result");
@@ -301,7 +408,8 @@
       };
 
       const pct = (step / (total - 1)) * 100;
-      const canGo = canProceed() && (!isIntro || answers.nombre);
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((answers.email || "").trim());
+      const canGo = canProceed() && (!isIntro || (answers.nombre && emailOk));
 
       return (
         <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse at 20% 0%, " + C.cream + " 0%, #fefcf8 50%, #fff 100%)" }}>
@@ -338,6 +446,10 @@
                 <div style={{ marginTop: 36, textAlign: "left", maxWidth: 380, marginLeft: "auto", marginRight: "auto" }}>
                   <label style={{ fontSize: 14, fontWeight: 600, color: C.navy, marginBottom: 8, display: "block" }}>Tu nombre completo</label>
                   <input type="text" value={answers.nombre || ""} onChange={function(e) { setAnswers(function(a) { return Object.assign({}, a, { nombre: e.target.value }); }); }} placeholder="Para personalizar tu resultado" style={{ width: "100%", padding: "13px 18px", borderRadius: 12, border: "1.5px solid rgba(27,42,74,0.1)", fontSize: 16, color: C.navy, outline: "none", background: "#fff", boxSizing: "border-box" }} />
+
+                  <label style={{ fontSize: 14, fontWeight: 600, color: C.navy, margin: "20px 0 8px", display: "block" }}>Tu correo electrónico</label>
+                  <input type="email" inputMode="email" autoComplete="email" value={answers.email || ""} onChange={function(e) { setAnswers(function(a) { return Object.assign({}, a, { email: e.target.value }); }); }} placeholder="Para enviarte tu resultado" style={{ width: "100%", padding: "13px 18px", borderRadius: 12, border: "1.5px solid rgba(27,42,74,0.1)", fontSize: 16, color: C.navy, outline: "none", background: "#fff", boxSizing: "border-box" }} />
+                  <div style={{ fontSize: 12.5, color: "rgba(27,42,74,0.4)", marginTop: 8, lineHeight: 1.5 }}>Tus respuestas son confidenciales. No compartimos tu correo con nadie.</div>
                 </div>
               </div>
             )}
@@ -410,9 +522,11 @@
                         </div>
                       </div>
                     )}
-                    <div style={{ marginTop: 24, padding: "16px 20px", borderRadius: 14, background: "rgba(122,148,85,0.06)" }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: C.olive, marginBottom: 8 }}>Estado del envío</div>
-                      {statusMsgs.map(function(m, i) { return <div key={i} style={{ fontSize: 13, color: m.startsWith("✓") ? C.olive : m.startsWith("⚠") ? C.orange : C.navy, marginBottom: 3, fontWeight: 500 }}>{m}</div>; })}
+                    <AgendaCTA nombre={answers.nombre} email={answers.email} arquetipo={archResult && ARCHETYPES[archResult.primary] ? ARCHETYPES[archResult.primary].title : ""} />
+
+                    <div style={{ marginTop: 24, padding: "14px 18px", borderRadius: 14, background: "rgba(27,42,74,0.03)", opacity: 0.75 }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: "rgba(27,42,74,0.35)", marginBottom: 6 }}>Estado del envío</div>
+                      {statusMsgs.map(function(m, i) { return <div key={i} style={{ fontSize: 12, color: m.startsWith("✓") ? C.olive : m.startsWith("⚠") ? C.orange : "rgba(27,42,74,0.5)", marginBottom: 2, fontWeight: 500 }}>{m}</div>; })}
                     </div>
                     <p style={{ textAlign: "center", fontSize: 13, color: "rgba(27,42,74,0.35)", marginTop: 28 }}>Mentes Abundantes — www.mentes-abundantes.com</p>
                   </div>
