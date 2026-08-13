@@ -11,6 +11,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+  <link href="https://assets.calendly.com/assets/external/widget.css" rel="stylesheet" />
   <script src="https://assets.calendly.com/assets/external/widget.js" async></script>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -23,7 +24,6 @@
     button { font-family: 'Source Sans 3', sans-serif; }
     textarea, input { font-family: 'Source Sans 3', sans-serif; }
     textarea:focus, input:focus { border-color: #CC5E22 !important; outline: none; }
-    .calendly-inline-widget { min-width: 280px; height: 700px; border-radius: 16px; overflow: hidden; }
   </style>
 </head>
 <body>
@@ -267,28 +267,23 @@
     const CALENDLY_URL = "https://calendly.com/manifiestoabundancia/coaching-sesion-1";
 
     function AgendaCTA({ nombre, email, arquetipo }) {
-      const [abierto, setAbierto] = useState(false);
-      const calRef = useRef(null);
-
       const buildUrl = function() {
         return CALENDLY_URL
-          + "?hide_gdpr_banner=1&background_color=fefcf8&text_color=1B2A4A&primary_color=CC5E22"
+          + "?hide_gdpr_banner=1"
           + "&name=" + encodeURIComponent(nombre || "")
           + "&email=" + encodeURIComponent(email || "")
           + "&a1=" + encodeURIComponent(arquetipo || "")
           + "&utm_content=" + encodeURIComponent(arquetipo || "");
       };
 
-      useEffect(function() {
-        if (!abierto || !calRef.current) return;
-        if (calRef.current.hasChildNodes()) return;
-        if (window.Calendly) {
-          window.Calendly.initInlineWidget({ url: buildUrl(), parentElement: calRef.current });
-          setTimeout(function() { calRef.current && calRef.current.scrollIntoView({ behavior: "smooth", block: "start" }); }, 250);
+      const abrir = function() {
+        const url = buildUrl();
+        if (window.Calendly && window.Calendly.initPopupWidget) {
+          window.Calendly.initPopupWidget({ url: url });
         } else {
-          window.open(buildUrl(), "_blank");
+          window.open(url, "_blank");
         }
-      }, [abierto]);
+      };
 
       return (
         <div style={{ marginTop: 32, padding: "32px 26px", borderRadius: 22, background: "linear-gradient(150deg, " + C.navy + " 0%, #24395F 100%)", color: "#fff", animation: "cardIn 0.6s ease 0.6s both", position: "relative", overflow: "hidden" }}>
@@ -319,23 +314,14 @@
             })}
           </div>
 
-          {!abierto && (
-            <div>
-              <button onClick={function() { setAbierto(true); }} style={{ width: "100%", padding: "17px 32px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, " + C.orange + ", #d97033)", color: "#fff", fontSize: 16, fontWeight: 700, letterSpacing: 0.5, cursor: "pointer", boxShadow: "0 6px 24px rgba(204,94,34,0.35)" }}>
-                Agendar mi sesión 1:1 →
-              </button>
-              <p style={{ textAlign: "center", fontSize: 13, color: "rgba(240,232,212,0.45)", marginTop: 14 }}>
-                Con Krystina y Franklin — Mentes Abundantes
-              </p>
-            </div>
-          )}
-
-          {abierto && (
-            <div>
-              <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: 1.5, textTransform: "uppercase", color: C.gold, marginBottom: 12 }}>Elige tu horario ↓</p>
-              <div ref={calRef} />
-            </div>
-          )}
+          <div>
+            <button onClick={abrir} style={{ width: "100%", padding: "17px 32px", borderRadius: 14, border: "none", background: "linear-gradient(135deg, " + C.orange + ", #d97033)", color: "#fff", fontSize: 16, fontWeight: 700, letterSpacing: 0.5, cursor: "pointer", boxShadow: "0 6px 24px rgba(204,94,34,0.35)" }}>
+              Agendar mi sesión 1:1 →
+            </button>
+            <p style={{ textAlign: "center", fontSize: 13, color: "rgba(240,232,212,0.45)", marginTop: 14 }}>
+              Con Krystina y Franklin — Mentes Abundantes
+            </p>
+          </div>
         </div>
       );
     }
