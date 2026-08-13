@@ -16,42 +16,58 @@ module.exports = async function handler(req, res) {
     const notion = new Client({ auth: process.env.NOTION_TOKEN });
 
     const {
-      participantName, date, primaryEmoji, primaryTitle, primaryTagline,
+      participantName, email, date, primaryEmoji, primaryTitle, primaryTagline,
       secondaryEmoji, secondaryTitle, secondaryTagline,
       profile, openAnswers
     } = req.body;
 
     const HQ_PAGE_ID = "2b73cc7cabbe806cba68f50a8c394ed4";
 
-    const children = [
-      {
-        object: "block", type: "heading_2",
-        heading_2: { rich_text: [{ type: "text", text: { content: "Resultado" } }] }
-      },
-      {
-        object: "block", type: "paragraph",
-        paragraph: { rich_text: [
-          { type: "text", text: { content: "Arquetipo Primario: " }, annotations: { bold: true } },
-          { type: "text", text: { content: primaryEmoji + " " + primaryTitle } },
-        ]}
-      },
-      {
-        object: "block", type: "paragraph",
-        paragraph: { rich_text: [{ type: "text", text: { content: primaryTagline }, annotations: { italic: true } }] }
-      },
-      {
-        object: "block", type: "paragraph",
-        paragraph: { rich_text: [
-          { type: "text", text: { content: "Arquetipo Secundario: " }, annotations: { bold: true } },
-          { type: "text", text: { content: secondaryEmoji + " " + secondaryTitle } },
-        ]}
-      },
-      {
-        object: "block", type: "paragraph",
-        paragraph: { rich_text: [{ type: "text", text: { content: secondaryTagline }, annotations: { italic: true } }] }
-      },
-      { object: "block", type: "divider", divider: {} },
-    ];
+    const children = [];
+
+    // Bloque de contacto — lo primero visible al abrir la página
+    children.push({
+      object: "block", type: "callout",
+      callout: {
+        icon: { type: "emoji", emoji: "📩" },
+        color: "gray_background",
+        rich_text: [
+          { type: "text", text: { content: "Contacto: " }, annotations: { bold: true } },
+          email
+            ? { type: "text", text: { content: email, link: { url: "mailto:" + email } } }
+            : { type: "text", text: { content: "sin correo registrado" }, annotations: { italic: true, color: "gray" } },
+          { type: "text", text: { content: "   ·   Fecha: " + date }, annotations: { color: "gray" } },
+        ],
+      }
+    });
+
+    children.push({
+      object: "block", type: "heading_2",
+      heading_2: { rich_text: [{ type: "text", text: { content: "Resultado" } }] }
+    });
+    children.push({
+      object: "block", type: "paragraph",
+      paragraph: { rich_text: [
+        { type: "text", text: { content: "Arquetipo Primario: " }, annotations: { bold: true } },
+        { type: "text", text: { content: primaryEmoji + " " + primaryTitle } },
+      ]}
+    });
+    children.push({
+      object: "block", type: "paragraph",
+      paragraph: { rich_text: [{ type: "text", text: { content: primaryTagline }, annotations: { italic: true } }] }
+    });
+    children.push({
+      object: "block", type: "paragraph",
+      paragraph: { rich_text: [
+        { type: "text", text: { content: "Arquetipo Secundario: " }, annotations: { bold: true } },
+        { type: "text", text: { content: secondaryEmoji + " " + secondaryTitle } },
+      ]}
+    });
+    children.push({
+      object: "block", type: "paragraph",
+      paragraph: { rich_text: [{ type: "text", text: { content: secondaryTagline }, annotations: { italic: true } }] }
+    });
+    children.push({ object: "block", type: "divider", divider: {} });
 
     if (profile) {
       children.push({
@@ -121,6 +137,20 @@ module.exports = async function handler(req, res) {
         paragraph: { rich_text: [
           { type: "text", text: { content: oa.answer }, annotations: { italic: true } },
         ]}
+      });
+    });
+
+    children.push({ object: "block", type: "divider", divider: {} });
+
+    // Seguimiento del 1:1 — para marcar a mano después de la sesión
+    children.push({
+      object: "block", type: "heading_3",
+      heading_3: { rich_text: [{ type: "text", text: { content: "Seguimiento 1:1" } }] }
+    });
+    ["Agendó su sesión 1:1", "Sesión realizada", "Entró al programa"].forEach(function(t) {
+      children.push({
+        object: "block", type: "to_do",
+        to_do: { checked: false, rich_text: [{ type: "text", text: { content: t } }] }
       });
     });
 
